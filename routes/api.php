@@ -6,10 +6,16 @@ use App\Http\Controllers\Api\MoodController;
 use App\Http\Controllers\Api\MoodSummaryController;
 use App\Http\Controllers\Api\CategoryController;
 
+Route::get('/health', fn () => response()->json([
+    'status' => 'ok',
+    'app' => 'MoodUp API',
+    'time' => now()->toIso8601String()
+]));
+
 Route::prefix('auth')->group(function () {
     Route::post('/register', [AuthController::class, 'register']);
     Route::post('/login', [AuthController::class, 'login']);
-    Route::get('/ping', fn () => response()->json(['ok' => true]));
+    // Route::get('/ping', fn () => response()->json(['ok' => true]));
 });
 
 Route::middleware('auth:sanctum')->group(function () {

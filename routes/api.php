@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\CategoryController;
 Route::prefix('auth')->group(function () {
     Route::post('/register', [AuthController::class, 'register']);
     Route::post('/login', [AuthController::class, 'login']);
+    Route::get('/ping', fn () => response()->json(['ok' => true]));
 });
 
 Route::middleware('auth:sanctum')->group(function () {
@@ -18,5 +19,5 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/moods/summary/weekly', [MoodSummaryController::class, 'weekly']);
 Route::get('/moods/summary/monthly', [MoodSummaryController::class, 'monthly']);
 Route::apiResource('categories', CategoryController::class);
-Route::get('/ping', fn () => response()->json(['ok' => true]));
+
 });

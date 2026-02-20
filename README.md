@@ -1,63 +1,241 @@
-<<<<<<< HEAD
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+🚀 MoodUp API (V1)
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+API RESTful para registro e análise de humor diário, com autenticação segura via Laravel Sanctum, suporte a categorias (many-to-many) e geração de resumos semanais e mensais.
 
-## About Laravel
+Deploy em produção via Railway.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+---
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+🌐 Deploy (Produção)
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+Base URL: https://moodup-v1-production.up.railway.app
 
-## Learning Laravel
+Health check público: GET /api/health
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+---
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+🛠️ Stack Tecnológica
 
-## Laravel Sponsors
+- PHP 8.3
+- Laravel 12
+- MySQL
+- Laravel Sanctum (Bearer Token)
+- Railway (Deploy & Database)
+- Postman (Testes manuais)
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+---
 
-### Premium Partners
+📦 Funcionalidades
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+✅ Registro de usuário
+✅ Login com geração de token
+✅ Logout
+✅ CRUD completo de humor (moods)
+✅ CRUD completo de categorias
+✅ Relatório semanal e mensal
+✅ Filtros por período
+✅ Filtro por categoria
+✅ Segurança por usuário (isolamento de dados)
+✅ API estruturada com Resources
 
-## Contributing
+---
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+🔐 Autenticação
 
-## Code of Conduct
+A autenticação é feita via Bearer Token utilizando Laravel Sanctum.
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Registro: POST /api/auth/register
 
-## Security Vulnerabilities
+Body:
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+{
+  "name": "nome",
+  "email": "seu_email_teste",
+  "password": "sua_senha_teste",
+  "password_confirmation": "sua_senha_teste"
+}
 
-## License
+Resposta:
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
-=======
-# moodup-V1
->>>>>>> ffe7df9c821afc368f8e9889e46af8fd558779f2
+{
+  "token": "1|xxxxxxxxxxxxxxxx"
+}
+
+---
+
+Usar Token nas rotas protegidas
+
+Header obrigatório:
+
+Authorization: Bearer SEU_TOKEN_AQUI
+Accept: application/json
+
+Dados do usuário autenticado:
+
+GET /api/auth/me
+
+---
+
+🧠 Moods (Registro de Humor)
+
+Listar:
+
+GET /api/moods
+
+Filtros opcionais:
+
+?start_date=2026-02-01
+?end_date=2026-02-28
+?category_id=1
+
+---
+
+Criar:
+
+POST /api/moods
+
+JSON 
+
+{
+  "date": "2026-02-22",
+  "level": 4,
+  "note": "Dia produtivo.",
+  "category_ids": [1, 2]
+}
+
+----
+
+Atualizar
+
+PATCH /api/moods/{id}
+
+----
+
+Remover
+
+DELETE /api/moods/{id}
+
+----
+
+🏷️ Categorias
+
+Listar
+
+GET /api/categories
+
+Criar
+
+POST /api/categories
+
+JSON
+
+{
+  "name": "Trabalho"
+}
+
+Atualizar
+
+PATCH /api/categories/{id}
+
+Remover
+
+DELETE /api/categories/{id}
+
+---
+
+📊 Resumos e Estatísticas
+
+Resumo Semanal
+
+GET /api/moods/summary/weekly
+
+Resumo Mensal
+
+GET /api/moods/summary/monthly
+
+Suporta filtros:
+
+?start_date=YYYY-MM-DD
+?end_date=YYYY-MM-DD
+?category_id=ID
+
+Retorna:
+
+- Média do período
+- Quantidade de registros
+- Distribuição por nível (1–5)
+- Melhor dia
+- Pior dia
+- Top 3 melhores
+- Top 3 piores
+
+---
+
+🧪 Rodando Localmente
+
+composer install
+cp .env.example .env
+php artisan key:generate
+php artisan migrate
+php artisan serve
+
+Acesse:
+
+http://127.0.0.1:8000
+
+---
+
+⚙️ Variáveis de Ambiente (Produção)
+
+Principais variáveis utilizadas:
+
+APP_NAME
+APP_ENV=production
+APP_KEY
+APP_DEBUG=false
+APP_URL
+DB_CONNECTION=mysql
+DB_HOST
+DB_PORT
+DB_DATABASE
+DB_USERNAME
+DB_PASSWORD
+
+----
+
+🧱 Estrutura da Arquitetura
+
+- Controllers organizados por domínio (Auth, Mood, Category, Summary)
+- Validações via FormRequest
+- Resources para padronização de resposta
+- Middleware auth:sanctum
+- Many-to-many (moods ↔ categories)
+- Filtros com query builder
+
+----
+
+🔒 Segurança
+
+- Autenticação via token
+- Proteção de rotas com middleware
+- Isolamento de dados por usuário
+- Validação de categoria por ownership
+- Proteção contra acesso cruzado
+
+----
+
+📈 Melhorias Futuras
+
+- Testes automatizados (Feature Tests)
+- Documentação Swagger/OpenAPI
+- Rate limiting avançado
+- Logs estruturados
+- Deploy com CI/CD
+- Versão mobile Flutter consumindo a API
+
+---
+
+👩‍💻 Autora
+
+Desenvolvido por Letícia Marques, estudante de ADS - Análise e Desenvolvimento de Sistemas
+Projeto de estudo com foco em arquitetura backend e deploy em produção.

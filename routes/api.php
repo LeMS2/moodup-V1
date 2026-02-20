@@ -18,4 +18,5 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/moods/summary/weekly', [MoodSummaryController::class, 'weekly']);
 Route::get('/moods/summary/monthly', [MoodSummaryController::class, 'monthly']);
 Route::apiResource('categories', CategoryController::class);
+Route::get('/ping', fn () => response()->json(['ok' => true]));
 });

@@ -48,16 +48,16 @@ if ($request->filled('category_id')) {
     $query->orderByDesc('date')->paginate(10)
 );
 }
-  public function store(StoreMoodRequest $request)
+public function store(StoreMoodRequest $request)
 {
     $user = $request->user();
 
-    $data = $request->validated();
-    $data['user_id'] = $user->id;
+    $data = $request->validated();        // ✅ pega tudo validado
+    $data['user_id'] = $user->id;         // ✅ força o dono do registro
 
-    $mood = Mood::create($data);
+    $mood = Mood::create($data);          // ✅ salva title/level/score/mood/triggers etc
 
-    // categorias
+    // categorias (se vier)
     $categoryIds = $request->input('category_ids', []);
     if (!empty($categoryIds)) {
         $validIds = \App\Models\Category::where('user_id', $user->id)
@@ -70,9 +70,7 @@ if ($request->filled('category_id')) {
 
     $mood->load('categories');
 
-    return (new MoodResource($mood))
-        ->response()
-        ->setStatusCode(201);
+    return (new MoodResource($mood))->response()->setStatusCode(201);
 }
 
     public function show(Request $request, Mood $mood)

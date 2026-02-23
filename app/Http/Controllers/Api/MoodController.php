@@ -48,20 +48,17 @@ if ($request->filled('category_id')) {
     $query->orderByDesc('date')->paginate(10)
 );
 }
-    public function store(StoreMoodRequest $request)
+  public function store(StoreMoodRequest $request)
 {
     $user = $request->user();
 
-    $mood = Mood::create([
-        'user_id' => $user->id,
-        'date'    => $request->date,
-        'level'   => $request->level,
-        'note'    => $request->note,
-    ]);
+    $data = $request->validated();
+    $data['user_id'] = $user->id;
 
-     // 🔹 AQUI entra o código do passo 5B
+    $mood = Mood::create($data);
+
+    // categorias
     $categoryIds = $request->input('category_ids', []);
-
     if (!empty($categoryIds)) {
         $validIds = \App\Models\Category::where('user_id', $user->id)
             ->whereIn('id', $categoryIds)
@@ -72,7 +69,10 @@ if ($request->filled('category_id')) {
     }
 
     $mood->load('categories');
-return (new MoodResource($mood))->response()->setStatusCode(201);
+
+    return (new MoodResource($mood))
+        ->response()
+        ->setStatusCode(201);
 }
 
     public function show(Request $request, Mood $mood)

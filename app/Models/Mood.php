@@ -9,12 +9,21 @@ class Mood extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'user_id',
-        'date',
-        'level',
-        'note',
-    ];
+protected $fillable = [
+  'user_id',
+  'title',
+  'date',
+  'level',
+  'score',
+  'note',
+  'mood',
+  'triggers',
+];
+
+protected $casts = [
+  'date' => 'date',
+  'triggers' => 'array',
+];
 
     public function user()
     {

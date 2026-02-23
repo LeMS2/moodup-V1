@@ -19,15 +19,21 @@ class UpdateMoodRequest extends FormRequest
      *
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
      */
+ 
     public function rules(): array
 {
     return [
-        'date'  => ['sometimes', 'date'],
-        'level' => ['sometimes', 'integer', 'min:1', 'max:5'],
-        'note'  => ['nullable', 'string', 'max:2000'],
+        'title' => ['nullable', 'string', 'max:255'],
+        'date' => ['nullable', 'date'],
+        'level' => ['nullable', 'integer', 'min:1', 'max:5'],
+        'score' => ['nullable', 'integer', 'min:0', 'max:10'],
+        'note' => ['nullable', 'string'],
+        'mood' => ['nullable', 'string', 'max:50'],
+        'triggers' => ['nullable', 'array'],
+        'triggers.*' => ['string', 'max:60'],
 
-        'category_ids' => ['sometimes', 'array'],
-        'category_ids.*' => ['integer', 'exists:categories,id'],
+        'category_ids' => ['nullable', 'array'],
+        'category_ids.*' => ['integer'],
     ];
 }
 }

@@ -25,5 +25,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/moods/summary/weekly', [MoodSummaryController::class, 'weekly']);
 Route::get('/moods/summary/monthly', [MoodSummaryController::class, 'monthly']);
 Route::apiResource('categories', CategoryController::class);
+Route::post('/ai/chat', [\App\Http\Controllers\Api\AIChatController::class, 'chat']);
 
 });

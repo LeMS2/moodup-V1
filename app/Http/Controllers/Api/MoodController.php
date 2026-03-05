@@ -70,7 +70,17 @@ public function store(StoreMoodRequest $request)
 
     $mood->load('categories');
 
-    return (new MoodResource($mood))->response()->setStatusCode(201);
+    // 🔹 recomendação automática
+    $rec = app(\App\Http\Controllers\Api\ResourceController::class)
+        ->recommend(new Request([
+            'level' => $mood->level,
+            'triggers' => $mood->triggers ?? [],
+        ]))->getData(true)['recommendation'] ?? null;
+
+    return response()->json([
+        'mood' => new MoodResource($mood),
+        'recommendation' => $rec,
+    ], 201);
 }
 
     public function show(Request $request, Mood $mood)

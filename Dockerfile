@@ -14,7 +14,7 @@ COPY . .
 # 🔥 CRIA .env a partir do exemplo
 RUN cp .env.example .env
 
-RUN composer install --no-dev--optimize-autoloader--no-interaction
+RUN composer install --no-dev --optimize-autoloader --no-interaction
 
 # 🔑 agora funciona
 RUN php artisan key:generate

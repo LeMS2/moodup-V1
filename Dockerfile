@@ -14,7 +14,7 @@ COPY . .
 # 🔥 CRIA .env a partir do exemplo
 RUN cp .env.example .env
 
-RUN composer install
+RUN composer install --no-dev--optimize-autoloader--no-interaction
 
 # 🔑 agora funciona
 RUN php artisan key:generate
@@ -28,3 +28,5 @@ RUN php artisan migrate --force
 EXPOSE 10000
 
 CMD php artisan serve --host=0.0.0.0 --port=10000
+
+ENV COMPOSER_MEMORY_LIMIT=-1

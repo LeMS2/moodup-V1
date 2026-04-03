@@ -6,23 +6,18 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
-    public function up()
-{
-    Schema::table('moods', function (Blueprint $table) {
-        $table->string('mood')->nullable();
-        $table->json('triggers')->nullable();
-    });
-}
-    /**
-     * Reverse the migrations.
-     */
+    public function up(): void
+    {
+        Schema::table('moods', function (Blueprint $table) {
+            $table->string('mood')->nullable();
+            $table->json('triggers')->nullable();
+        });
+    }
+
     public function down(): void
     {
         Schema::table('moods', function (Blueprint $table) {
-            //
+            $table->dropColumn(['mood', 'triggers']);
         });
     }
 };

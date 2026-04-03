@@ -6,31 +6,25 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
-   public function up(): void
-{
-    Schema::create('moods', function (Blueprint $table) {
-        $table->id();
+    public function up(): void
+    {
+        Schema::create('moods', function (Blueprint $table) {
+            $table->id();
 
-        $table->foreignId('user_id')
-            ->constrained()
-            ->cascadeOnDelete();
+            $table->foreignId('user_id')
+                ->constrained()
+                ->cascadeOnDelete();
 
-        $table->date('date');                 // data do registro
-        $table->unsignedTinyInteger('level'); // 1 a 5 (ou 1 a 10, você decide)
-        $table->text('note')->nullable();     // observação opcional
+            $table->date('date');
+            $table->unsignedInteger('level'); // ajustado
+            $table->text('note')->nullable();
 
-        $table->timestamps();
+            $table->timestamps();
 
-        // evita 2 registros no mesmo dia por usuário
-        $table->unique(['user_id', 'date']);
-    });
-}
-    /**
-     * Reverse the migrations.
-     */
+            $table->unique(['user_id', 'date']);
+        });
+    }
+
     public function down(): void
     {
         Schema::dropIfExists('moods');

@@ -9,12 +9,12 @@ return new class extends Migration {
     {
         Schema::create('resources', function (Blueprint $table) {
             $table->id();
-            $table->string('type', 20); // video|musica|livro|exercicio
+            $table->string('type', 20);
             $table->string('title', 255);
             $table->text('description')->nullable();
             $table->string('url', 500)->nullable();
             $table->string('author', 120)->nullable();
-            $table->unsignedSmallInteger('duration_minutes')->nullable();
+            $table->integer('duration_minutes')->nullable(); // ajustado
             $table->json('tags')->nullable();
             $table->boolean('is_active')->default(true);
             $table->timestamps();

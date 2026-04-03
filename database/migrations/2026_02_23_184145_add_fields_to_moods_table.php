@@ -11,14 +11,17 @@ return new class extends Migration {
             if (!Schema::hasColumn('moods', 'title')) {
                 $table->string('title')->nullable();
             }
+
             if (!Schema::hasColumn('moods', 'score')) {
-                $table->unsignedTinyInteger('score')->nullable();
+                $table->unsignedInteger('score')->nullable(); // ajustado
             }
+
             if (!Schema::hasColumn('moods', 'mood')) {
-                $table->string('mood')->nullable(); // ex: "bem", "triste"...
+                $table->string('mood')->nullable();
             }
+
             if (!Schema::hasColumn('moods', 'triggers')) {
-                $table->json('triggers')->nullable(); // array
+                $table->json('triggers')->nullable();
             }
         });
     }

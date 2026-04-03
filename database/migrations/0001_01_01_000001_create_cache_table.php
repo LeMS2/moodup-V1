@@ -6,14 +6,11 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('cache', function (Blueprint $table) {
             $table->string('key')->primary();
-            $table->mediumText('value');
+            $table->text('value'); // ajustado (era mediumText)
             $table->integer('expiration')->index();
         });
 
@@ -24,9 +21,6 @@ return new class extends Migration
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('cache');

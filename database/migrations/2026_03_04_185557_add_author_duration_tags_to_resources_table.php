@@ -9,13 +9,15 @@ return new class extends Migration {
     {
         Schema::table('resources', function (Blueprint $table) {
             if (!Schema::hasColumn('resources', 'author')) {
-                $table->string('author', 120)->nullable()->after('url');
+                $table->string('author', 120)->nullable();
             }
+
             if (!Schema::hasColumn('resources', 'duration_minutes')) {
-                $table->unsignedSmallInteger('duration_minutes')->nullable()->after('author');
+                $table->integer('duration_minutes')->nullable();
             }
+
             if (!Schema::hasColumn('resources', 'tags')) {
-                $table->json('tags')->nullable()->after('duration_minutes');
+                $table->json('tags')->nullable();
             }
         });
     }
@@ -23,9 +25,15 @@ return new class extends Migration {
     public function down(): void
     {
         Schema::table('resources', function (Blueprint $table) {
-            if (Schema::hasColumn('resources', 'tags')) $table->dropColumn('tags');
-            if (Schema::hasColumn('resources', 'duration_minutes')) $table->dropColumn('duration_minutes');
-            if (Schema::hasColumn('resources', 'author')) $table->dropColumn('author');
+            if (Schema::hasColumn('resources', 'tags')) {
+                $table->dropColumn('tags');
+            }
+            if (Schema::hasColumn('resources', 'duration_minutes')) {
+                $table->dropColumn('duration_minutes');
+            }
+            if (Schema::hasColumn('resources', 'author')) {
+                $table->dropColumn('author');
+            }
         });
     }
 };

@@ -19,11 +19,9 @@ ENV COMPOSER_MEMORY_LIMIT=-1
 
 RUN composer install --no-dev --optimize-autoloader --no-interaction
 
-RUN php artisan key:generate
-
 RUN mkdir -p storage bootstrap/cache
 RUN chmod -R 777 storage bootstrap/cache
 
 EXPOSE 10000
 
-CMD php artisan migrate --force || true && php artisan serve --host=0.0.0.0 --port=10000
+CMD php artisan config:clear && php artisan cache:clear && php artisan migrate --force || true && php artisan serve --host=0.0.0.0 --port=10000

@@ -26,12 +26,12 @@ class AuthController extends Controller
             'accepted_terms_at' => now(),
         ]);
 
-        $token = $user->createToken('mobile')->plainTextToken;
+        // $token = $user->createToken('mobile')->plainTextToken;
 
         return response()->json([
             'user' => $user,
-            'token' => $token,
-            'accepted_terms' => !is_null($user->accepted_terms_at),
+            // 'token' => $token,
+            // 'accepted_terms' => !is_null($user->accepted_terms_at),
         ], 201);
     }
 

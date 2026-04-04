@@ -19,20 +19,24 @@ class AuthController extends Controller
             'accepted_terms' => ['required', 'accepted'],
         ]);
 
-        $user = User::create([
-            'name' => $data['name'],
-            'email' => $data['email'],
-            'password' => Hash::make($data['password']),
-            'accepted_terms_at' => now(),
-        ]);
+        try {
+            $user = User::create([
+                'name' => $data['name'],
+                'email' => $data['email'],
+                'password' => Hash::make($data['password']),
+                'accepted_terms_at' => now(),
+            ]);
 
-        // $token = $user->createToken('mobile')->plainTextToken;
+            // 🔥 TEMPORÁRIO: sem token pra testar
+            return response()->json([
+                'user' => $user
+            ], 201);
 
-        return response()->json([
-            'user' => $user,
-            // 'token' => $token,
-            // 'accepted_terms' => !is_null($user->accepted_terms_at),
-        ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'erro_real' => $e->getMessage()
+            ], 500);
+        }
     }
 
     public function login(Request $request)

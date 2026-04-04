@@ -15,27 +15,15 @@ WORKDIR /var/www
 
 COPY . .
 
-# 🔥 cria .env
-RUN cp .env.example .env
-
-# 🔥 evita erro de memória
 ENV COMPOSER_MEMORY_LIMIT=-1
 
-# 📦 instala dependências
 RUN composer install --no-dev --optimize-autoloader --no-interaction
 
-# 🔑 gera key
 RUN php artisan key:generate
 
-# 🗄️ cria banco corretamente
-RUN mkdir -p database
-RUN touch database/database.sqlite
-RUN chmod -R 777 database
-
-# 📁 permissões do laravel
 RUN mkdir -p storage bootstrap/cache
 RUN chmod -R 777 storage bootstrap/cache
 
 EXPOSE 10000
 
-CMD php artisan migrate --force || true && php artisan db:seed --force || true && php artisan serve --host=0.0.0.0 --port=10000
+CMD php artisan migrate --force || true && php artisan serve --host=0.0.0.0 --port=10000

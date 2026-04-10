@@ -3,52 +3,71 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Category;
 use App\Models\Mood;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class MoodSummaryController extends Controller
 {
+    /**
+     * 🔥 RESUMO SEMANAL (últimos 7 dias baseado no último registro)
+     */
     public function weekly(Request $request)
     {
         $userId = $request->user()->id;
 
-        // 🔥 pega o primeiro registro do usuário
-        $firstDate = Mood::where('user_id', $userId)->min('date');
+        $lastDate = Mood::where('user_id', $userId)->max('date');
 
-        $start = $firstDate
-            ? Carbon::parse($firstDate)->startOfDay()
-            : now()->subDays(6)->startOfDay();
+        if (!$lastDate) {
+            return response()->json([
+                'period' => null,
+                'count' => 0,
+                'average_level' => null,
+                'series' => [],
+            ]);
+        }
 
-        $end = now()->endOfDay();
+        $end = Carbon::parse($lastDate)->endOfDay();
+        $start = $end->copy()->subDays(6)->startOfDay();
 
-        return response()->json($this->buildSummary($request, $start, $end));
+        return response()->json(
+            $this->buildSummaryWithSeries($request, $start, $end)
+        );
     }
 
+    /**
+     * 🔥 RESUMO MENSAL (baseado no último registro)
+     */
     public function monthly(Request $request)
     {
         $userId = $request->user()->id;
 
-        $firstDate = Mood::where('user_id', $userId)->min('date');
+        $lastDate = Mood::where('user_id', $userId)->max('date');
 
-        $start = $firstDate
-            ? Carbon::parse($firstDate)->startOfDay()
-            : now()->startOfMonth();
+        if (!$lastDate) {
+            return response()->json([
+                'period' => null,
+                'count' => 0,
+                'average_level' => null,
+                'series' => [],
+            ]);
+        }
 
-        $end = now()->endOfDay();
+        $end = Carbon::parse($lastDate)->endOfDay();
+        $start = $end->copy()->subDays(29)->startOfDay(); // 30 dias
 
-        return response()->json($this->buildSummary($request, $start, $end));
+        return response()->json(
+            $this->buildSummaryWithSeries($request, $start, $end)
+        );
     }
 
     /**
-     * 🔥 INSIGHTS CORRIGIDO (AGORA FUNCIONA COM QUALQUER DATA)
+     * 🔥 INSIGHTS (já corrigido)
      */
     public function weeklyInsights(Request $request)
     {
         $userId = $request->user()->id;
 
-        // 🔥 pega todos os registros
         $moods = Mood::query()
             ->where('user_id', $userId)
             ->orderBy('date')
@@ -67,7 +86,6 @@ class MoodSummaryController extends Controller
             ]);
         }
 
-        // 🔥 pega últimos 7 dias BASEADO NOS DADOS
         $lastDate = Carbon::parse($moods->max('date'));
         $start = $lastDate->copy()->subDays(6);
 
@@ -76,7 +94,6 @@ class MoodSummaryController extends Controller
             $lastDate->toDateString()
         ]);
 
-        // 📊 monta série fixa de 7 dias
         $series = [];
 
         for ($i = 0; $i < 7; $i++) {
@@ -99,7 +116,6 @@ class MoodSummaryController extends Controller
             fn ($d) => $d['avg_level'] !== null && $d['avg_level'] <= 2
         )->count();
 
-        // 📈 tendência
         $first3 = collect($series)->take(3)->pluck('avg_level')->filter();
         $last3  = collect($series)->slice(4, 3)->pluck('avg_level')->filter();
 
@@ -108,7 +124,6 @@ class MoodSummaryController extends Controller
             $trend = round($last3->avg() - $first3->avg(), 2);
         }
 
-        // ⚠️ risco
         $risk = null;
 
         if ($avg !== null) {
@@ -129,7 +144,6 @@ class MoodSummaryController extends Controller
                 : ($risk >= 40 ? 'medio' : 'baixo');
         }
 
-        // 🔥 triggers
         $triggerCounts = [];
 
         foreach ($filtered as $m) {
@@ -154,7 +168,6 @@ class MoodSummaryController extends Controller
             ])
             ->values();
 
-        // 🚨 alertas
         $alerts = [];
 
         if ($riskLevel === 'alto') {
@@ -181,7 +194,10 @@ class MoodSummaryController extends Controller
         ]);
     }
 
-    private function buildSummary(Request $request, Carbon $start, Carbon $end): array
+    /**
+     * 🔥 RESUMO COM SÉRIE (USADO PELO GRÁFICO)
+     */
+    private function buildSummaryWithSeries(Request $request, Carbon $start, Carbon $end): array
     {
         $userId = $request->user()->id;
 
@@ -192,13 +208,24 @@ class MoodSummaryController extends Controller
                 $end->toDateString()
             ])
             ->orderBy('date')
-            ->get(['id', 'date', 'level', 'note']);
+            ->get(['date', 'level']);
+
+        $series = [];
+
+        for ($i = 0; $i < 7; $i++) {
+            $day = $start->copy()->addDays($i)->toDateString();
+            $dayMoods = $moods->where('date', $day);
+
+            $series[] = [
+                'date' => $day,
+                'avg_level' => $dayMoods->count()
+                    ? round($dayMoods->avg('level'), 2)
+                    : 0,
+                'count' => $dayMoods->count(),
+            ];
+        }
 
         $count = $moods->count();
-
-        $average = $count > 0
-            ? round($moods->avg('level'), 2)
-            : null;
 
         return [
             'period' => [
@@ -206,7 +233,10 @@ class MoodSummaryController extends Controller
                 'end_date' => $end->toDateString(),
             ],
             'count' => $count,
-            'average_level' => $average,
+            'average_level' => $count > 0
+                ? round($moods->avg('level'), 2)
+                : null,
+            'series' => $series,
         ];
     }
 }

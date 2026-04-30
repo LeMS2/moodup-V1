@@ -8,6 +8,11 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
+// 🔥 OTP
+use App\Models\PasswordOtp;
+use Illuminate\Support\Facades\Mail;
+use Carbon\Carbon;
+
 class AuthController extends Controller
 {
     public function register(Request $request)
@@ -27,7 +32,6 @@ class AuthController extends Controller
                 'accepted_terms_at' => now(),
             ]);
 
-            // 🔥 TEMPORÁRIO: sem token pra testar
             return response()->json([
                 'user' => $user
             ], 201);
@@ -93,6 +97,91 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'Logout realizado com sucesso.',
+        ]);
+    }
+
+    // ===============================
+    // 🔐 ESQUECI SENHA (OTP)
+    // ===============================
+
+    public function forgotPassword(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email'
+        ]);
+
+        $user = User::where('email', $request->email)->first();
+
+        if (!$user) {
+            return response()->json(['message' => 'Usuário não encontrado'], 404);
+        }
+
+        // 🔥 gera OTP 6 dígitos
+        $otp = rand(100000, 999999);
+
+        // remove OTPs antigos
+        PasswordOtp::where('email', $request->email)->delete();
+
+        PasswordOtp::create([
+            'email' => $request->email,
+            'otp' => Hash::make($otp),
+            'expires_at' => Carbon::now()->addMinutes(10),
+        ]);
+
+        // 📧 envia email
+        Mail::raw("Seu código MoodUp é: $otp\nExpira em 10 minutos.", function ($message) use ($request) {
+            $message->to($request->email)
+                ->subject('Recuperação de senha - MoodUp');
+        });
+
+        return response()->json([
+            'message' => 'Código enviado para o email'
+        ]);
+    }
+
+    // ===============================
+    // 🔐 RESET SENHA COM OTP
+    // ===============================
+
+    public function resetPassword(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+            'otp' => 'required',
+            'password' => 'required|min:6|confirmed',
+        ]);
+
+        $record = PasswordOtp::where('email', $request->email)->first();
+
+        if (!$record) {
+            return response()->json(['message' => 'Código inválido'], 400);
+        }
+
+        // ⏳ verifica expiração
+        if (Carbon::now()->gt($record->expires_at)) {
+            return response()->json(['message' => 'Código expirado'], 400);
+        }
+
+        // 🔐 verifica OTP
+        if (!Hash::check($request->otp, $record->otp)) {
+            return response()->json(['message' => 'Código incorreto'], 400);
+        }
+
+        $user = User::where('email', $request->email)->first();
+
+        if (!$user) {
+            return response()->json(['message' => 'Usuário não encontrado'], 404);
+        }
+
+        // 🔥 atualiza senha
+        $user->password = Hash::make($request->password);
+        $user->save();
+
+        // 🧹 remove OTP
+        $record->delete();
+
+        return response()->json([
+            'message' => 'Senha redefinida com sucesso'
         ]);
     }
 }

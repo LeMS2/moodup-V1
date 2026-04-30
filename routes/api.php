@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\MoodController;
 use App\Http\Controllers\Api\MoodSummaryController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\ResourceController;
+use App\Http\Controllers\Api\FeedbackController;
 
 
 Route::get('/health', fn () => response()->json([
@@ -17,6 +18,8 @@ Route::get('/health', fn () => response()->json([
 Route::prefix('auth')->group(function () {
     Route::post('/register', [AuthController::class, 'register']);
     Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
+    Route::post('/reset-password', [AuthController::class, 'resetPassword']);
     // Route::get('/ping', fn () => response()->json(['ok' => true]));
 });
 
@@ -31,6 +34,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/ai/chat', [\App\Http\Controllers\Api\AIChatController::class, 'chat']);
     Route::get('/resources', [ResourceController::class, 'index']);
     Route::get('/resources/recommendation', [ResourceController::class, 'recommend']);
-    Route::get('/moods/insights/weekly', [MoodSummaryController::class, 'weeklyInsights']);
     Route::get('/resources/recommendation/history', [ResourceController::class, 'recommendByHistory']);
+    Route::get('/moods/insights/weekly', [MoodSummaryController::class, 'weeklyInsights']);
+    Route::post('/feedback', [FeedbackController::class, 'store']);
+    
 });

@@ -147,6 +147,7 @@ class AuthController extends Controller
             </div>
         ");
 });
+}
 
     // ===============================
     // 🔐 RESET SENHA COM OTP

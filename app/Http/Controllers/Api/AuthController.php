@@ -17,33 +17,38 @@ use SendGrid\Mail\Mail;
 
 class AuthController extends Controller
 {
-    public function register(Request $request)
-    {
-        $data = $request->validate([
-            'name' => ['required', 'string', 'max:120'],
-            'email' => ['required', 'email', 'max:190', 'unique:users,email'],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
-            'accepted_terms' => ['required', 'accepted'],
+   public function register(Request $request)
+{
+    $data = $request->validate([
+        'name' => ['required', 'string', 'max:120'],
+        'email' => ['required', 'email', 'max:190', 'unique:users,email'],
+        'password' => ['required', 'string', 'min:8', 'confirmed'],
+        'accepted_terms' => ['required', 'accepted'],
+    ]);
+
+    try {
+        $user = User::create([
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'password' => Hash::make($data['password']),
+            'accepted_terms_at' => now(),
         ]);
 
-        try {
-            $user = User::create([
-                'name' => $data['name'],
-                'email' => $data['email'],
-                'password' => Hash::make($data['password']),
-                'accepted_terms_at' => now(),
-            ]);
+        // 🔥 CRIA O TOKEN (igual ao login)
+        $token = $user->createToken('mobile')->plainTextToken;
 
-            return response()->json([
-                'user' => $user
-            ], 201);
+        return response()->json([
+            'user' => $user,
+            'token' => $token,           // ← ADICIONE ISSO
+            'accepted_terms' => true,
+        ], 201);
 
-        } catch (\Exception $e) {
-            return response()->json([
-                'erro_real' => $e->getMessage()
-            ], 500);
-        }
+    } catch (\Exception $e) {
+        return response()->json([
+            'erro_real' => $e->getMessage()
+        ], 500);
     }
+}
 
     public function login(Request $request)
     {

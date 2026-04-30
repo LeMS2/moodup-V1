@@ -129,15 +129,24 @@ class AuthController extends Controller
         ]);
 
         // 📧 envia email
-        Mail::raw("Seu código MoodUp é: $otp\nExpira em 10 minutos.", function ($message) use ($request) {
-            $message->to($request->email)
-                ->subject('Recuperação de senha - MoodUp');
-        });
+       Mail::send([], [], function ($message) use ($request, $otp) {
+    $message->to($request->email)
+        ->subject('Código de recuperação - MoodUp')
+        ->html("
+            <div style='font-family:sans-serif;padding:20px'>
+                <h2 style='color:#2dd4bf'>MoodUp 💙</h2>
+                <p>Use o código abaixo para redefinir sua senha:</p>
 
-        return response()->json([
-            'message' => 'Código enviado para o email'
-        ]);
-    }
+                <div style='font-size:32px;font-weight:bold;margin:20px 0'>
+                    $otp
+                </div>
+
+                <p>Esse código expira em 10 minutos.</p>
+
+                <small>Se você não solicitou, ignore este email.</small>
+            </div>
+        ");
+});
 
     // ===============================
     // 🔐 RESET SENHA COM OTP

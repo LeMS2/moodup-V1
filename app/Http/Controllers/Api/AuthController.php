@@ -10,8 +10,10 @@ use Illuminate\Validation\ValidationException;
 
 // 🔥 OTP
 use App\Models\PasswordOtp;
-use Illuminate\Support\Facades\Mail;
 use Carbon\Carbon;
+
+// 🚀 SENDGRID API
+use SendGrid\Mail\Mail;
 
 class AuthController extends Controller
 {
@@ -79,7 +81,6 @@ class AuthController extends Controller
         return response()->json([
             'message' => 'Termos aceitos com sucesso.',
             'accepted_terms' => true,
-            'accepted_terms_at' => $user->accepted_terms_at,
         ]);
     }
 
@@ -101,7 +102,7 @@ class AuthController extends Controller
     }
 
     // ===============================
-    // 🔐 ESQUECI SENHA (OTP)
+    // 🔐 ESQUECI SENHA (OTP + SENDGRID)
     // ===============================
 
     public function forgotPassword(Request $request)
@@ -112,45 +113,66 @@ class AuthController extends Controller
 
         $user = User::where('email', $request->email)->first();
 
+        // 🔒 NÃO revela se usuário existe
         if (!$user) {
-            return response()->json(['message' => 'Usuário não encontrado'], 404);
+            return response()->json([
+                'message' => 'Se o email existir, você receberá o código.'
+            ]);
         }
 
-        // 🔥 gera OTP 6 dígitos
+        // 🔢 gera OTP
         $otp = rand(100000, 999999);
 
-        // remove OTPs antigos
+        // 🧹 remove antigos
         PasswordOtp::where('email', $request->email)->delete();
 
+        // 💾 salva hash
         PasswordOtp::create([
             'email' => $request->email,
             'otp' => Hash::make($otp),
             'expires_at' => Carbon::now()->addMinutes(10),
         ]);
 
-        // 📧 envia email
-       Mail::send([], [], function ($message) use ($request, $otp) {
-    $message->to($request->email)
-        ->subject('Código de recuperação - MoodUp')
-        ->html("
-            <div style='font-family:sans-serif;padding:20px'>
-                <h2 style='color:#2dd4bf'>MoodUp 💙</h2>
-                <p>Use o código abaixo para redefinir sua senha:</p>
+        // 📧 email bonito
+        $html = "
+        <div style='font-family:sans-serif;padding:20px'>
+            <h2 style='color:#2dd4bf'>MoodUp 💙</h2>
+            <p>Use o código abaixo para redefinir sua senha:</p>
 
-                <div style='font-size:32px;font-weight:bold;margin:20px 0'>
-                    $otp
-                </div>
-
-                <p>Esse código expira em 10 minutos.</p>
-
-                <small>Se você não solicitou, ignore este email.</small>
+            <div style='font-size:32px;font-weight:bold;margin:20px 0'>
+                $otp
             </div>
-        ");
-});
-}
+
+            <p>Esse código expira em 10 minutos.</p>
+            <small>Se você não solicitou, ignore este email.</small>
+        </div>
+        ";
+
+        // 🚀 SENDGRID API
+        $email = new Mail();
+        $email->setFrom(env('MAIL_FROM_ADDRESS'), env('MAIL_FROM_NAME'));
+        $email->setSubject("Código de recuperação - MoodUp");
+        $email->addTo($request->email);
+        $email->addContent("text/html", $html);
+
+        $sendgrid = new \SendGrid(env('SENDGRID_API_KEY'));
+
+        try {
+            $sendgrid->send($email);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Erro ao enviar email',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+
+        return response()->json([
+            'message' => 'Código enviado com sucesso'
+        ]);
+    }
 
     // ===============================
-    // 🔐 RESET SENHA COM OTP
+    // 🔐 RESET SENHA
     // ===============================
 
     public function resetPassword(Request $request)
@@ -167,12 +189,10 @@ class AuthController extends Controller
             return response()->json(['message' => 'Código inválido'], 400);
         }
 
-        // ⏳ verifica expiração
         if (Carbon::now()->gt($record->expires_at)) {
             return response()->json(['message' => 'Código expirado'], 400);
         }
 
-        // 🔐 verifica OTP
         if (!Hash::check($request->otp, $record->otp)) {
             return response()->json(['message' => 'Código incorreto'], 400);
         }
@@ -183,11 +203,9 @@ class AuthController extends Controller
             return response()->json(['message' => 'Usuário não encontrado'], 404);
         }
 
-        // 🔥 atualiza senha
         $user->password = Hash::make($request->password);
         $user->save();
 
-        // 🧹 remove OTP
         $record->delete();
 
         return response()->json([

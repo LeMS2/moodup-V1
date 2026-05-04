@@ -11,19 +11,24 @@ return new class extends Migration
      */
     public function up()
 {
-    Schema::create('triggers', function (Blueprint $table) {
+    Schema::create('mood_trigger', function (Blueprint $table) {
         $table->id();
-        $table->string('name'); // Ex: escola, trabalho
-        $table->string('label'); // Ex: Escola/Faculdade (nome bonito)
-        $table->timestamps();
+
+        $table->foreignId('mood_id')
+            ->constrained()
+            ->cascadeOnDelete();
+
+        $table->foreignId('trigger_id')
+            ->constrained()
+            ->cascadeOnDelete();
     });
 }
 
-    /**a
+    /**
      * Reverse the migrations.
      */
     public function down(): void
     {
-        Schema::dropIfExists('triggers');
+        Schema::dropIfExists('mood_trigger');
     }
 };

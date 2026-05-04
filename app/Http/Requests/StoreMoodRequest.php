@@ -14,26 +14,31 @@ class StoreMoodRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'title' => ['nullable', 'string', 'max:255'],
+            // 📌 CAMPOS DO MOOD (OBRIGATÓRIOS)
+            'title' => ['required', 'string', 'max:255'],  // ← REQUIRED
             'date' => ['required', 'date'],
             'level' => ['required', 'integer', 'min:1', 'max:5'],
             'score' => ['nullable', 'integer', 'min:0', 'max:10'],
             'note' => ['nullable', 'string'],
-            'mood' => ['nullable', 'string', 'max:50'],
-            'trigger_ids' => ['nullable', 'array'],        // ← MUDAR DE 'triggers' para 'trigger_ids'
-            'trigger_ids.*' => ['exists:triggers,id'],    // ← Validar se o ID existe no banco
+            'mood' => ['required', 'string', 'max:50'],  // ← REQUIRED
+            
+            // 📌 TRIGGERS
+            'trigger_ids' => ['nullable', 'array'],
+            'trigger_ids.*' => ['exists:triggers,id'],
+            
+            // 📌 CATEGORIAS
             'category_ids' => ['nullable', 'array'],
             'category_ids.*' => ['integer', 'exists:categories,id'],
         ];
     }
 
-    // Opcional: Mensagens personalizadas
     public function messages(): array
     {
         return [
-            'trigger_ids.*.exists' => 'Um ou mais gatilhos selecionados são inválidos.',
+            'title.required' => 'O título é obrigatório.',
             'date.required' => 'A data é obrigatória.',
             'level.required' => 'O nível de humor é obrigatório.',
+            'mood.required' => 'O humor é obrigatório.',
         ];
     }
 }

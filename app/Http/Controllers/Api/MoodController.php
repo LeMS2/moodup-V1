@@ -8,6 +8,7 @@ use App\Http\Requests\UpdateMoodRequest;
 use App\Models\Mood;
 use Illuminate\Http\Request;
 use App\Http\Resources\MoodResource;
+use Illuminate\Support\Facades\Log; // 🔥 IMPORTAR O LOG
 
 class MoodController extends Controller
 {
@@ -15,7 +16,7 @@ class MoodController extends Controller
     {
         $query = Mood::query()
             ->where('user_id', $request->user()->id)
-            ->with(['categories', 'triggers']); // 🔥 inclui triggers
+            ->with(['categories', 'triggers']);
 
         // filtro por período
         if ($request->filled('start_date')) {
@@ -51,15 +52,32 @@ class MoodController extends Controller
 
     public function store(StoreMoodRequest $request)
     {
+        // 🔥 LOG 1: Ver todos os dados que chegaram
+        Log::info('🔍 DADOS CRUS RECEBIDOS:', $request->all());
+        
         $user = $request->user();
-
+        
+        // 🔥 LOG 2: Ver usuário autenticado
+        Log::info('👤 USUÁRIO:', ['id' => $user->id, 'email' => $user->email]);
+        
         $data = $request->validated();
+        
+        // 🔥 LOG 3: Ver dados depois da validação
+        Log::info('✅ DADOS VALIDADOS:', $data);
+        
         $data['user_id'] = $user->id;
 
         // ❌ garante que não salva triggers antigo
         unset($data['triggers']);
+        unset($data['trigger_ids']);
+        
+        // 🔥 LOG 4: Ver dados que serão salvos
+        Log::info('💾 DADOS PARA CREATE:', $data);
 
         $mood = Mood::create($data);
+        
+        // 🔥 LOG 5: Ver o que foi salvo
+        Log::info('🎉 MOOD CRIADO:', $mood->toArray());
 
         // =========================
         // 📌 CATEGORIAS
@@ -79,12 +97,21 @@ class MoodController extends Controller
         // 🔥 TRIGGERS (NOVO)
         // =========================
         $triggerIds = $request->input('trigger_ids', []);
+        
+        // 🔥 LOG 6: Ver triggers recebidos
+        Log::info('🔗 TRIGGER IDs RECEBIDOS:', $triggerIds);
 
         if (!empty($triggerIds)) {
             $mood->triggers()->sync($triggerIds);
+            Log::info('✅ TRIGGERS SINCRONIZADOS:', $triggerIds);
+        } else {
+            Log::warning('⚠️ NENHUM TRIGGER ID RECEBIDO');
         }
 
         $mood->load(['categories', 'triggers']);
+        
+        // 🔥 LOG 7: Ver resultado final
+        Log::info('📋 MOOD FINAL COM TRIGGERS:', $mood->toArray());
 
         // =========================
         // 🤖 RECOMENDAÇÃO
@@ -92,7 +119,7 @@ class MoodController extends Controller
         $rec = app(\App\Http\Controllers\Api\ResourceController::class)
             ->recommend(new Request([
                 'level' => $mood->level,
-                'triggers' => $mood->triggers->pluck('name')->toArray(), // 🔥 corrigido
+                'triggers' => $mood->triggers->pluck('name')->toArray(),
             ]))->getData(true)['recommendation'] ?? null;
 
         return response()->json([
@@ -106,7 +133,7 @@ class MoodController extends Controller
         $this->authorizeMood($request, $mood);
 
         return new MoodResource(
-            $mood->load(['categories', 'triggers']) // 🔥 inclui triggers
+            $mood->load(['categories', 'triggers'])
         );
     }
 
@@ -116,7 +143,7 @@ class MoodController extends Controller
 
         $data = $request->validated();
 
-        unset($data['triggers']); // ❌ remove campo antigo
+        unset($data['triggers']);
 
         $mood->update($data);
 

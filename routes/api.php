@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\MoodSummaryController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\ResourceController;
 use App\Http\Controllers\Api\FeedbackController;
+use App\Http\Controllers\Api\TriggerController;
 
 
 Route::get('/health', fn () => response()->json([
@@ -37,5 +38,5 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/resources/recommendation/history', [ResourceController::class, 'recommendByHistory']);
     Route::get('/moods/insights/weekly', [MoodSummaryController::class, 'weeklyInsights']);
     Route::post('/feedback', [FeedbackController::class, 'store']);
-    
+    Route::get('/triggers', [TriggerController::class, 'index']);
 });

@@ -25,7 +25,7 @@ class MoodSeeder extends Seeder
                 'level' => rand(2, 5),
                 'score' => rand(2, 5),
                 'note' => fake()->sentence(),
-                'mood' => ['feliz', 'triste', 'ansioso'][rand(0,2)],
+                'mood' => ['muito_triste','triste','neutro','bem','muito_bem'][rand(0,4)],
             ]);
 
             // 🔥 anexar triggers aleatórias

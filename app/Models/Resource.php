@@ -14,4 +14,9 @@ class Resource extends Model
         'tags' => 'array',
         'is_active' => 'boolean',
     ];
+
+    public function subTriggers()
+    {
+        return $this->belongsToMany(SubTrigger::class, 'sub_trigger_resource');
+    }
 }

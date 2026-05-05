@@ -10,4 +10,9 @@ class SubTrigger extends Model
     {
         return $this->hasMany(Suggestion::class);
     }
+    
+    public function resources()
+    {
+        return $this->belongsToMany(Resource::class, 'sub_trigger_resource');
+    }
 }

@@ -13,12 +13,16 @@ class DatabaseSeeder extends Seeder
     /**
      * Seed the application's database.
      */
-    public function run(): void
-    {
 
-        $this->call([
+        public function run(): void
+{
+    $this->call([
+        TriggerSeeder::class,
+        SubTriggerSeeder::class,
         ResourceSeeder::class,
+        SubTriggerResourceSeeder::class,
+        UserSeeder::class,
+        MoodSeeder::class,
     ]);
-    
-    }
+} 
 }

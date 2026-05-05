@@ -23,6 +23,8 @@ class DatabaseSeeder extends Seeder
         SubTriggerResourceSeeder::class,
         UserSeeder::class,
         MoodSeeder::class,
+        SuggestionSeeder::class,
+        
     ]);
 } 
 }

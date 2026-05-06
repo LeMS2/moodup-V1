@@ -9,7 +9,6 @@ use App\Models\Trigger;
 
 class SubTriggerController extends Controller
 {
-    // 🔥 NOVO MÉTODO
     public function index(Request $request)
     {
         $triggerName = $request->query('trigger');
@@ -18,23 +17,19 @@ class SubTriggerController extends Controller
             return response()->json([]);
         }
 
-        // 🔥 normaliza (pra evitar erro com acento/maiúscula)
         $triggerName = strtolower($triggerName);
 
-        // tenta encontrar o trigger pelo nome
         $trigger = Trigger::whereRaw('LOWER(name) = ?', [$triggerName])->first();
 
         if (!$trigger) {
             return response()->json([]);
         }
 
-        // pega os subgatilhos relacionados
         $subTriggers = $trigger->subTriggers()->get();
 
         return response()->json($subTriggers);
     }
 
-    // 🔥 JÁ EXISTIA (mantém)
     public function show($id)
     {
         $subTrigger = SubTrigger::with([
@@ -44,9 +39,10 @@ class SubTriggerController extends Controller
 
         return response()->json([
             'sub_trigger' => $subTrigger->name,
+            'intro_text' => $subTrigger->intro_text,
+            'closing_text' => $subTrigger->closing_text,
             'suggestions' => $subTrigger->suggestions,
             'resources' => $subTrigger->resources
         ]);
     }
-}
 }

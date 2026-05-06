@@ -16,4 +16,9 @@ class Trigger extends Model
     {
         return $this->belongsToMany(Mood::class);
     }
+
+    public function subTriggers()
+    {
+        return $this->hasMany(SubTrigger::class, 'trigger', 'name');
+    }
 }

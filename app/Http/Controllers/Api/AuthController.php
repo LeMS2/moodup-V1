@@ -17,38 +17,38 @@ use SendGrid\Mail\Mail;
 
 class AuthController extends Controller
 {
-   public function register(Request $request)
-{
-    $data = $request->validate([
-        'name' => ['required', 'string', 'max:120'],
-        'email' => ['required', 'email', 'max:190', 'unique:users,email'],
-        'password' => ['required', 'string', 'min:8', 'confirmed'],
-        'accepted_terms' => ['required', 'accepted'],
-    ]);
-
-    try {
-        $user = User::create([
-            'name' => $data['name'],
-            'email' => $data['email'],
-            'password' => Hash::make($data['password']),
-            'accepted_terms_at' => now(),
+    public function register(Request $request)
+    {
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:120'],
+            'email' => ['required', 'email', 'max:190', 'unique:users,email'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'accepted_terms' => ['required', 'accepted'],
         ]);
 
-        // 🔥 CRIA O TOKEN (igual ao login)
-        $token = $user->createToken('mobile')->plainTextToken;
+        try {
+            $user = User::create([
+                'name' => $data['name'],
+                'email' => $data['email'],
+                'password' => Hash::make($data['password']),
+                'accepted_terms_at' => now(),
+            ]);
 
-        return response()->json([
-            'user' => $user,
-            'token' => $token,           // ← ADICIONE ISSO
-            'accepted_terms' => true,
-        ], 201);
+            // 🔥 CRIA O TOKEN (igual ao login)
+            $token = $user->createToken('mobile')->plainTextToken;
 
-    } catch (\Exception $e) {
-        return response()->json([
-            'erro_real' => $e->getMessage()
-        ], 500);
+            return response()->json([
+                'user' => $user,
+                'token' => $token,
+                'accepted_terms' => true,
+            ], 201);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'erro_real' => $e->getMessage()
+            ], 500);
+        }
     }
-}
 
     public function login(Request $request)
     {
@@ -177,44 +177,69 @@ class AuthController extends Controller
     }
 
     // ===============================
-    // 🔐 RESET SENHA
+    // 🔐 RESET SENHA (COM VALIDAÇÃO DE SENHA IGUAL)
     // ===============================
 
     public function resetPassword(Request $request)
     {
         $request->validate([
             'email' => 'required|email',
-            'otp' => 'required',
+            'otp' => 'required|string',
             'password' => 'required|min:6|confirmed',
         ]);
 
+        // Busca o registro do OTP
         $record = PasswordOtp::where('email', $request->email)->first();
 
         if (!$record) {
-            return response()->json(['message' => 'Código inválido'], 400);
+            return response()->json([
+                'message' => 'Código inválido. Solicite um novo código.'
+            ], 400);
         }
 
+        // Verifica se o código expirou
         if (Carbon::now()->gt($record->expires_at)) {
-            return response()->json(['message' => 'Código expirado'], 400);
+            return response()->json([
+                'message' => 'Código expirado. Solicite um novo código.'
+            ], 400);
         }
 
+        // Verifica se o código está correto
         if (!Hash::check($request->otp, $record->otp)) {
-            return response()->json(['message' => 'Código incorreto'], 400);
+            return response()->json([
+                'message' => 'Código incorreto. Verifique e tente novamente.'
+            ], 400);
         }
 
+        // Busca o usuário
         $user = User::where('email', $request->email)->first();
 
         if (!$user) {
-            return response()->json(['message' => 'Usuário não encontrado'], 404);
+            return response()->json([
+                'message' => 'Usuário não encontrado.'
+            ], 404);
         }
 
+        // 🔥 VALIDAÇÃO CRÍTICA: Verificar se a nova senha é igual à antiga
+        if (Hash::check($request->password, $user->password)) {
+            return response()->json([
+                'message' => 'A nova senha não pode ser igual à senha atual. Escolha uma senha diferente.'
+            ], 400);
+        }
+
+        // Atualiza a senha
         $user->password = Hash::make($request->password);
         $user->save();
 
+        // 🔒 Segurança extra: Invalidar todos os tokens do usuário
+        // Isso força o usuário a fazer login novamente em todos os dispositivos
+        $user->tokens()->delete();
+
+        // Remove o OTP usado
         $record->delete();
 
         return response()->json([
-            'message' => 'Senha redefinida com sucesso'
+            'message' => 'Senha redefinida com sucesso! Faça login com sua nova senha.'
         ]);
     }
 }

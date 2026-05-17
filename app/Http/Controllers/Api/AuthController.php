@@ -22,6 +22,9 @@ class AuthController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:120'],
             'email' => ['required', 'email', 'max:190', 'unique:users,email'],
+            'sexo' => ['required', 'string', 'max:30'],
+            'faixa_etaria' => ['required', 'string', 'max:30'],
+            'estado' => ['required', 'string', 'max:100'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
             'accepted_terms' => ['required', 'accepted'],
         ]);
@@ -30,6 +33,9 @@ class AuthController extends Controller
             $user = User::create([
                 'name' => $data['name'],
                 'email' => $data['email'],
+                'sexo' => $data['sexo'],
+                'faixa_etaria' => $data['faixa_etaria'],
+                'estado' => $data['estado'],
                 'password' => Hash::make($data['password']),
                 'accepted_terms_at' => now(),
             ]);

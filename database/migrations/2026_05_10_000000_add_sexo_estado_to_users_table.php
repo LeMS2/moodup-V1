@@ -6,18 +6,14 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    public function up(): void
-    {
-        Schema::table('users', function (Blueprint $table) {
-            $table->string('sexo');
-            $table->string('faixa_etaria');
-            $table->string('estado');
-           /* AJUSTAR PARA ESSE CASO NÃO DÊ BOA 
-           $table->string('sexo')->after('email');
-           $table->string('estado')->after('sexo'); 
-            */
-        });
-    }
+   public function up(): void
+{
+    Schema::table('users', function (Blueprint $table) {
+        $table->string('sexo')->nullable();
+        $table->string('faixa_etaria')->nullable();
+        $table->string('estado')->nullable();
+    });
+}
 
     public function down(): void
     {

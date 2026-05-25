@@ -34,6 +34,9 @@ class UpdateMoodRequest extends FormRequest
 
         'category_ids' => ['nullable', 'array'],
         'category_ids.*' => ['integer'],
+
+        'trigger_ids' => 'nullable|array',
+        'trigger_ids.*' => 'exists:triggers,id',
     ];
 }
 }

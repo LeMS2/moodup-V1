@@ -8,7 +8,7 @@ use App\Http\Requests\UpdateMoodRequest;
 use App\Models\Mood;
 use Illuminate\Http\Request;
 use App\Http\Resources\MoodResource;
-use Illuminate\Support\Facades\Log; // 🔥 IMPORTAR O LOG
+use Illuminate\Support\Facades\Log;
 
 class MoodController extends Controller
 {
@@ -29,7 +29,6 @@ class MoodController extends Controller
 
         // filtro por categoria
         if ($request->filled('category_id')) {
-
             $categoryId = (int) $request->input('category_id');
 
             $exists = \App\Models\Category::where('id', $categoryId)
@@ -52,31 +51,27 @@ class MoodController extends Controller
 
     public function store(StoreMoodRequest $request)
     {
-        // 🔥 LOG 1: Ver todos os dados que chegaram
         Log::info('🔍 DADOS CRUS RECEBIDOS:', $request->all());
         
         $user = $request->user();
         
-        // 🔥 LOG 2: Ver usuário autenticado
         Log::info('👤 USUÁRIO:', ['id' => $user->id, 'email' => $user->email]);
         
         $data = $request->validated();
         
-        // 🔥 LOG 3: Ver dados depois da validação
         Log::info('✅ DADOS VALIDADOS:', $data);
         
         $data['user_id'] = $user->id;
 
-        // ❌ garante que não salva triggers antigo
+        // Remove campos que não devem ser salvos diretamente
         unset($data['triggers']);
         unset($data['trigger_ids']);
+        unset($data['category_ids']);
         
-        // 🔥 LOG 4: Ver dados que serão salvos
         Log::info('💾 DADOS PARA CREATE:', $data);
 
         $mood = Mood::create($data);
         
-        // 🔥 LOG 5: Ver o que foi salvo
         Log::info('🎉 MOOD CRIADO:', $mood->toArray());
 
         // =========================
@@ -91,26 +86,30 @@ class MoodController extends Controller
                 ->all();
 
             $mood->categories()->sync($validIds);
+            Log::info('✅ CATEGORIAS SINCRONIZADAS:', $validIds);
         }
 
         // =========================
-        // 🔥 TRIGGERS (NOVO)
+        // 🔥 TRIGGERS
         // =========================
         $triggerIds = $request->input('trigger_ids', []);
         
-        // 🔥 LOG 6: Ver triggers recebidos
         Log::info('🔗 TRIGGER IDs RECEBIDOS:', $triggerIds);
 
         if (!empty($triggerIds)) {
-            $mood->triggers()->sync($triggerIds);
-            Log::info('✅ TRIGGERS SINCRONIZADOS:', $triggerIds);
+            // Verifica se os triggers existem
+            $validTriggerIds = \App\Models\Trigger::whereIn('id', $triggerIds)
+                ->pluck('id')
+                ->all();
+                
+            $mood->triggers()->sync($validTriggerIds);
+            Log::info('✅ TRIGGERS SINCRONIZADOS:', $validTriggerIds);
         } else {
             Log::warning('⚠️ NENHUM TRIGGER ID RECEBIDO');
         }
 
         $mood->load(['categories', 'triggers']);
         
-        // 🔥 LOG 7: Ver resultado final
         Log::info('📋 MOOD FINAL COM TRIGGERS:', $mood->toArray());
 
         // =========================
@@ -139,52 +138,163 @@ class MoodController extends Controller
 
     public function update(UpdateMoodRequest $request, Mood $mood)
     {
+        Log::info('✏️ ATUALIZANDO MOOD:', ['id' => $mood->id]);
+        Log::info('📥 DADOS RECEBIDOS:', $request->all());
+        
         $this->authorizeMood($request, $mood);
 
         $data = $request->validated();
+        
+        Log::info('✅ DADOS VALIDADOS PARA UPDATE:', $data);
 
+        // Remove campos que não devem ser atualizados diretamente
         unset($data['triggers']);
+        unset($data['trigger_ids']);
+        unset($data['category_ids']);
+        unset($data['user_id']); // Impede mudança de usuário
 
         $mood->update($data);
+        
+        Log::info('💾 MOOD ATUALIZADO:', $mood->fresh()->toArray());
 
         // =========================
         // 📌 CATEGORIAS
         // =========================
         if ($request->has('category_ids')) {
-
             $categoryIds = $request->input('category_ids', []);
 
-            $validIds = \App\Models\Category::where('user_id', $request->user()->id)
-                ->whereIn('id', $categoryIds)
-                ->pluck('id')
-                ->all();
+            if (!empty($categoryIds)) {
+                $validIds = \App\Models\Category::where('user_id', $request->user()->id)
+                    ->whereIn('id', $categoryIds)
+                    ->pluck('id')
+                    ->all();
 
-            $mood->categories()->sync($validIds);
+                $mood->categories()->sync($validIds);
+                Log::info('✅ CATEGORIAS ATUALIZADAS:', $validIds);
+            } else {
+                $mood->categories()->sync([]);
+                Log::info('🗑️ CATEGORIAS REMOVIDAS');
+            }
         }
 
         // =========================
         // 🔥 TRIGGERS
         // =========================
         if ($request->has('trigger_ids')) {
-
             $triggerIds = $request->input('trigger_ids', []);
 
-            $mood->triggers()->sync($triggerIds);
+            if (!empty($triggerIds)) {
+                $validTriggerIds = \App\Models\Trigger::whereIn('id', $triggerIds)
+                    ->pluck('id')
+                    ->all();
+                    
+                $mood->triggers()->sync($validTriggerIds);
+                Log::info('✅ TRIGGERS ATUALIZADOS:', $validTriggerIds);
+            } else {
+                $mood->triggers()->sync([]);
+                Log::info('🗑️ TRIGGERS REMOVIDOS');
+            }
         }
 
-        return new MoodResource(
-            $mood->load(['categories', 'triggers'])
-        );
+        $mood->load(['categories', 'triggers']);
+        
+        Log::info('📋 MOOD FINAL APÓS UPDATE:', $mood->toArray());
+
+        return new MoodResource($mood);
     }
 
     public function destroy(Request $request, Mood $mood)
     {
+        Log::info('🗑️ DELETANDO MOOD:', ['id' => $mood->id, 'user_id' => $mood->user_id]);
+        
         $this->authorizeMood($request, $mood);
 
+        // Remove relacionamentos primeiro (opcional, dependendo das constraints do banco)
+        $mood->categories()->sync([]);
+        $mood->triggers()->sync([]);
+        
         $mood->delete();
+        
+        Log::info('✅ MOOD DELETADO COM SUCESSO:', ['id' => $mood->id]);
 
         return response()->json([
             'message' => 'Registro removido com sucesso.',
+        ], 200);
+    }
+
+    /**
+     * Get summary of moods for dashboard
+     */
+    public function summary(Request $request)
+    {
+        $userId = $request->user()->id;
+        
+        $query = Mood::where('user_id', $userId);
+        
+        // Filtro por período
+        if ($request->filled('start_date')) {
+            $query->whereDate('date', '>=', $request->input('start_date'));
+        }
+        
+        if ($request->filled('end_date')) {
+            $query->whereDate('date', '<=', $request->input('end_date'));
+        }
+        
+        $moods = $query->get();
+        
+        return response()->json([
+            'total' => $moods->count(),
+            'average_level' => $moods->avg('level'),
+            'by_level' => [
+                1 => $moods->where('level', 1)->count(),
+                2 => $moods->where('level', 2)->count(),
+                3 => $moods->where('level', 3)->count(),
+                4 => $moods->where('level', 4)->count(),
+                5 => $moods->where('level', 5)->count(),
+            ],
+            'latest' => MoodResource::collection($moods->take(5)),
+        ]);
+    }
+
+    /**
+     * Get weekly summary
+     */
+    public function weeklySummary(Request $request)
+    {
+        $userId = $request->user()->id;
+        
+        $endDate = $request->input('end_date', now());
+        $startDate = $request->input('start_date', now()->subDays(6));
+        
+        $moods = Mood::where('user_id', $userId)
+            ->whereBetween('date', [$startDate, $endDate])
+            ->orderBy('date')
+            ->get();
+        
+        $series = [];
+        $currentDate = clone $startDate;
+        
+        for ($i = 0; $i < 7; $i++) {
+            $dateStr = $currentDate->toDateString();
+            $dayMoods = $moods->where('date', $dateStr);
+            
+            $series[] = [
+                'date' => $dateStr,
+                'avg_level' => $dayMoods->count() ? round($dayMoods->avg('level'), 2) : null,
+                'count' => $dayMoods->count(),
+            ];
+            
+            $currentDate->addDay();
+        }
+        
+        return response()->json([
+            'period' => [
+                'start_date' => $startDate,
+                'end_date' => $endDate,
+            ],
+            'count' => $moods->count(),
+            'average_level' => $moods->count() ? round($moods->avg('level'), 2) : null,
+            'series' => $series,
         ]);
     }
 

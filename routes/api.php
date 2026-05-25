@@ -28,24 +28,56 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::post('/auth/accept-terms', [AuthController::class, 'acceptTerms']);
 
+    // =========================
+    // 📌 ROTAS DE MOODS (API Resource)
+    // =========================
     Route::apiResource('moods', MoodController::class);
-
+    
+    // =========================
+    // 📌 ROTAS ADICIONAIS DE SUMMARY E INSIGHTS
+    // =========================
+    Route::get('/moods/summary', [MoodController::class, 'summary']);
     Route::get('/moods/summary/weekly', [MoodSummaryController::class, 'weekly']);
     Route::get('/moods/summary/monthly', [MoodSummaryController::class, 'monthly']);
     Route::get('/moods/insights/weekly', [MoodSummaryController::class, 'weeklyInsights']);
+    
+    // =========================
+    // 📌 ROTAS PARA ESTATÍSTICAS AVANÇADAS
+    // =========================
+    Route::get('/moods/stats/daily', [MoodController::class, 'dailyStats']);
+    Route::get('/moods/stats/monthly', [MoodController::class, 'monthlyStats']);
 
+    // =========================
+    // 📌 CATEGORIAS
+    // =========================
     Route::apiResource('categories', CategoryController::class);
 
+    // =========================
+    // 🤖 AI E RECURSOS
+    // =========================
     Route::post('/ai/chat', [\App\Http\Controllers\Api\AIChatController::class, 'chat']);
 
     Route::get('/resources', [ResourceController::class, 'index']);
     Route::get('/resources/recommendation', [ResourceController::class, 'recommend']);
     Route::get('/resources/recommendation/history', [ResourceController::class, 'recommendByHistory']);
 
+    // =========================
+    // 💬 FEEDBACK
+    // =========================
     Route::post('/feedback', [FeedbackController::class, 'store']);
 
-    // 🔥 IMPORTANTE (ajustado aqui)
+    // =========================
+    // 🔥 TRIGGERS E SUB-TRIGGERS
+    // =========================
     Route::get('/triggers', [TriggerController::class, 'index']);
-    Route::get('/sub-triggers', [SubTriggerController::class, 'index']); // NOVA ROTA
+    Route::get('/triggers/{id}', [TriggerController::class, 'show']);
+    Route::post('/triggers', [TriggerController::class, 'store']);
+    Route::put('/triggers/{id}', [TriggerController::class, 'update']);
+    Route::delete('/triggers/{id}', [TriggerController::class, 'destroy']);
+    
+    Route::get('/sub-triggers', [SubTriggerController::class, 'index']);
     Route::get('/sub-triggers/{id}', [SubTriggerController::class, 'show']);
+    Route::post('/sub-triggers', [SubTriggerController::class, 'store']);
+    Route::put('/sub-triggers/{id}', [SubTriggerController::class, 'update']);
+    Route::delete('/sub-triggers/{id}', [SubTriggerController::class, 'destroy']);
 });

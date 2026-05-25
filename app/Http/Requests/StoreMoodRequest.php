@@ -29,6 +29,9 @@ class StoreMoodRequest extends FormRequest
             // 📌 CATEGORIAS
             'category_ids' => ['nullable', 'array'],
             'category_ids.*' => ['integer', 'exists:categories,id'],
+
+            'trigger_ids' => 'nullable|array',
+            'trigger_ids.*' => 'exists:triggers,id',
         ];
     }
 

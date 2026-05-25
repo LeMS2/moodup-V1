@@ -62,16 +62,18 @@ class MoodSummaryController extends Controller
     }
 
     /**
-     * 🔥 INSIGHTS (já corrigido)
+     * 🔥 INSIGHTS (CORRIGIDO - com relacionamento many-to-many)
      */
     public function weeklyInsights(Request $request)
     {
         $userId = $request->user()->id;
 
+        // 🔥 CORREÇÃO: Não selecionar 'triggers' diretamente, usar with() para o relacionamento
         $moods = Mood::query()
             ->where('user_id', $userId)
+            ->with('triggers')  // Carrega os triggers via relacionamento many-to-many
             ->orderBy('date')
-            ->get(['date', 'level', 'triggers']);
+            ->get(['date', 'level', 'id']);  // Só campos que existem na tabela moods
 
         if ($moods->isEmpty()) {
             return response()->json([
@@ -144,17 +146,14 @@ class MoodSummaryController extends Controller
                 : ($risk >= 40 ? 'medio' : 'baixo');
         }
 
+        // 🔥 CORREÇÃO: Coletar triggers do relacionamento many-to-many
         $triggerCounts = [];
 
-        foreach ($filtered as $m) {
-            $t = is_string($m->triggers)
-                ? json_decode($m->triggers, true)
-                : $m->triggers;
-
-            if (!is_array($t)) continue;
-
-            foreach ($t as $item) {
-                $triggerCounts[$item] = ($triggerCounts[$item] ?? 0) + 1;
+        foreach ($filtered as $mood) {
+            // Pega os triggers do relacionamento many-to-many via tabela pivô mood_trigger
+            foreach ($mood->triggers as $trigger) {
+                $triggerName = $trigger->name;
+                $triggerCounts[$triggerName] = ($triggerCounts[$triggerName] ?? 0) + 1;
             }
         }
 

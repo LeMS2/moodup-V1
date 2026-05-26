@@ -27,6 +27,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/me', [AuthController::class, 'me']);
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::post('/auth/accept-terms', [AuthController::class, 'acceptTerms']);
+    Route::post('/account/deactivate', [AuthController::class, 'deactivateAccount']);
 
     // =========================
     // 📌 ROTAS DE MOODS (API Resource)

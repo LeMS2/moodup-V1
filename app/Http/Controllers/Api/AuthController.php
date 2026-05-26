@@ -65,15 +65,22 @@ class AuthController extends Controller
 
         $user = User::where('email', $data['email'])->first();
 
-        if (!$user || !Hash::check($data['password'], $user->password)) {
-            throw ValidationException::withMessages([
-                'email' => ['Credenciais inválidas.'],
-            ]);
-        }
+if (!$user || !Hash::check($data['password'], $user->password)) {
+    throw ValidationException::withMessages([
+        'email' => ['Credenciais inválidas.'],
+    ]);
+}
 
-        $user->tokens()->delete();
+if ($user->desativado_em) {
+    return response()->json([
+        'message' => 'Sua conta está desativada. Para reativá-la, redefina sua senha.',
+        'requires_password_reset' => true,
+    ], 403);
+}
 
-        $token = $user->createToken('mobile')->plainTextToken;
+$user->tokens()->delete();
+
+$token = $user->createToken('mobile')->plainTextToken;
 
         return response()->json([
             'user' => $user,
@@ -111,6 +118,20 @@ class AuthController extends Controller
             'message' => 'Logout realizado com sucesso.',
         ]);
     }
+    public function deactivateAccount(Request $request)
+{
+    $user = $request->user();
+
+    $user->desativado_em = now();
+    $user->save();
+
+    // segurança: derruba todas as sessões/tokens
+    $user->tokens()->delete();
+
+    return response()->json([
+        'message' => 'Conta desativada com sucesso.',
+    ]);
+}
 
     // ===============================
     // 🔐 ESQUECI SENHA (OTP + SENDGRID)
@@ -234,8 +255,18 @@ class AuthController extends Controller
         }
 
         // Atualiza a senha
-        $user->password = Hash::make($request->password);
-        $user->save();
+        // $user->password = Hash::make($request->password);
+        // atualizando abauxo $user->save();
+
+        // Atualiza a senha
+$user->password = Hash::make($request->password);
+
+// Se a conta estava desativada, reativa automaticamente
+if ($user->desativado_em) {
+    $user->desativado_em = null;
+}
+
+$user->save();
 
         // 🔒 Segurança extra: Invalidar todos os tokens do usuário
         // Isso força o usuário a fazer login novamente em todos os dispositivos

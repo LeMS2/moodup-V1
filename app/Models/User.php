@@ -27,7 +27,8 @@ class User extends Authenticatable
         'estado',
         'password',
         'accepted_terms_at',
-    ];
+        'desativado_em',
+];
 
     /**
      * The attributes that should be hidden for serialization.
@@ -45,13 +46,14 @@ class User extends Authenticatable
      * @return array<string, string>
      */
     protected function casts(): array
-    {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-            'accepted_terms_at' => 'datetime',
-        ];
-    }
+{
+    return [
+        'email_verified_at' => 'datetime',
+        'password' => 'hashed',
+        'accepted_terms_at' => 'datetime',
+        'desativado_em' => 'datetime',
+    ];
+}
 
  public function moods()
 {

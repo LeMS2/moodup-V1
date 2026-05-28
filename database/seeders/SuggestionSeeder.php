@@ -19,7 +19,7 @@ class SuggestionSeeder extends Seeder
             // 🎓 PERÍODO DE PROVAS
             [
                 'sub_trigger_id' => sub('Período de provas'),
-                'text' => 'Divida o conteúdo em partes menores',
+                'text' => 'teste menores',
             ],
             [
                 'sub_trigger_id' => sub('Período de provas'),

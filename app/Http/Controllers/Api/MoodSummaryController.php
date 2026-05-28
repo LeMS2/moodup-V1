@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Mood;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB; // 🔥 IMPORTANTE: Adicionar esta linha no topo
 
 class MoodSummaryController extends Controller
 {
@@ -190,6 +191,144 @@ class MoodSummaryController extends Controller
             'risk_level' => $riskLevel,
             'top_triggers' => $topTriggers,
             'alerts' => $alerts,
+        ]);
+    }
+
+    // ============================================================
+    // 📊 NOVOS MÉTODOS PARA ESTATÍSTICAS E RELATÓRIOS
+    // ============================================================
+
+    /**
+     * 📊 Estatísticas de triggers mais usados
+     */
+    public function topTriggers(Request $request)
+    {
+        $userId = $request->user()->id;
+        $limit = $request->input('limit', 5);
+        $days = $request->input('days', 30); // últimos 30 dias por padrão
+        
+        $startDate = now()->subDays($days);
+        
+        $topTriggers = DB::table('mood_trigger')
+            ->join('moods', 'mood_trigger.mood_id', '=', 'moods.id')
+            ->join('triggers', 'mood_trigger.trigger_id', '=', 'triggers.id')
+            ->where('moods.user_id', $userId)
+            ->where('moods.date', '>=', $startDate)
+            ->select('triggers.id', 'triggers.name', DB::raw('count(*) as total'))
+            ->groupBy('triggers.id', 'triggers.name')
+            ->orderByDesc('total')
+            ->limit($limit)
+            ->get();
+        
+        return response()->json([
+            'triggers' => $topTriggers,
+            'period_days' => $days,
+            'total_entries' => Mood::where('user_id', $userId)
+                ->where('date', '>=', $startDate)
+                ->count()
+        ]);
+    }
+
+    /**
+     * 📚 Recursos mais acessados
+     */
+    public function topResources(Request $request)
+    {
+        $userId = $request->user()->id;
+        $limit = $request->input('limit', 5);
+        $days = $request->input('days', 30);
+        
+        $startDate = now()->subDays($days);
+        
+        // Assumindo que você tem uma tabela 'resource_views' ou similar
+        $topResources = DB::table('resource_views')
+            ->join('resources', 'resource_views.resource_id', '=', 'resources.id')
+            ->where('resource_views.user_id', $userId)
+            ->where('resource_views.created_at', '>=', $startDate)
+            ->select('resources.id', 'resources.title', DB::raw('count(*) as views'))
+            ->groupBy('resources.id', 'resources.title')
+            ->orderByDesc('views')
+            ->limit($limit)
+            ->get();
+        
+        // Se não tiver tabela de views, retorna recomendação baseada nos triggers
+        if ($topResources->isEmpty()) {
+            // Pega os triggers mais comuns e sugere recursos relacionados
+            $topTriggers = DB::table('mood_trigger')
+                ->join('moods', 'mood_trigger.mood_id', '=', 'moods.id')
+                ->join('triggers', 'mood_trigger.trigger_id', '=', 'triggers.id')
+                ->where('moods.user_id', $userId)
+                ->where('moods.date', '>=', $startDate)
+                ->select('triggers.name', DB::raw('count(*) as total'))
+                ->groupBy('triggers.name')
+                ->orderByDesc('total')
+                ->limit(3)
+                ->get();
+            
+            return response()->json([
+                'resources' => [],
+                'suggestions' => $topTriggers,
+                'message' => 'Com base nos seus gatilhos mais frequentes, recomendamos explorar recursos relacionados.'
+            ]);
+        }
+        
+        return response()->json([
+            'resources' => $topResources,
+            'period_days' => $days
+        ]);
+    }
+
+    /**
+     * 📈 Resumo completo de estatísticas
+     */
+    public function statsOverview(Request $request)
+    {
+        $userId = $request->user()->id;
+        $days = $request->input('days', 30);
+        $startDate = now()->subDays($days);
+        
+        // Média geral
+        $avgLevel = Mood::where('user_id', $userId)
+            ->where('date', '>=', $startDate)
+            ->avg('level');
+        
+        // Distribuição por nível
+        $levelDistribution = Mood::where('user_id', $userId)
+            ->where('date', '>=', $startDate)
+            ->select('level', DB::raw('count(*) as total'))
+            ->groupBy('level')
+            ->orderBy('level')
+            ->get();
+        
+        // Dias com registro
+        $daysWithEntries = Mood::where('user_id', $userId)
+            ->where('date', '>=', $startDate)
+            ->distinct('date')
+            ->count('date');
+        
+        // Melhor e pior dia (média mais alta e mais baixa)
+        $bestDay = Mood::where('user_id', $userId)
+            ->where('date', '>=', $startDate)
+            ->select('date', DB::raw('avg(level) as avg_level'))
+            ->groupBy('date')
+            ->orderByDesc('avg_level')
+            ->first();
+        
+        $worstDay = Mood::where('user_id', $userId)
+            ->where('date', '>=', $startDate)
+            ->select('date', DB::raw('avg(level) as avg_level'))
+            ->groupBy('date')
+            ->orderBy('avg_level')
+            ->first();
+        
+        return response()->json([
+            'period_days' => $days,
+            'total_entries' => Mood::where('user_id', $userId)->where('date', '>=', $startDate)->count(),
+            'days_with_entries' => $daysWithEntries,
+            'average_level' => round($avgLevel, 2),
+            'level_distribution' => $levelDistribution,
+            'best_day' => $bestDay,
+            'worst_day' => $worstDay,
         ]);
     }
 

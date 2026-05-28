@@ -48,6 +48,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/moods/stats/monthly', [MoodController::class, 'monthlyStats']);
 
     // =========================
+    // 📊 ROTAS DE ESTATÍSTICAS E RELATÓRIOS (NOVAS)
+    // =========================
+    Route::get('/stats/top-triggers', [MoodSummaryController::class, 'topTriggers']);
+    Route::get('/stats/top-resources', [MoodSummaryController::class, 'topResources']);
+    Route::get('/stats/overview', [MoodSummaryController::class, 'statsOverview']);
+
+    // =========================
     // 📌 CATEGORIAS
     // =========================
     Route::apiResource('categories', CategoryController::class);

@@ -12,15 +12,17 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('account_status_logs', function (Blueprint $table) {
-      $table->id();
+            $table->id();
 
-$table->foreignId('user_id')
-    ->constrained('users')
-    ->onDelete('cascade');
+            $table->foreignId('user_id')
+                ->constrained('users')
+                ->onDelete('cascade');
 
-$table->string('acao');
+            $table->string('acao');
 
-$table->timestamps();
+            $table->timestamps();
+        });
+    }
 
     /**
      * Reverse the migrations.

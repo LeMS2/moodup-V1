@@ -28,6 +28,7 @@ class User extends Authenticatable
         'password',
         'accepted_terms_at',
         'desativado_em',
+        'role',
 ];
 
     /**

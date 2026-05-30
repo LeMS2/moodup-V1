@@ -60,4 +60,9 @@ class User extends Authenticatable
 {
     return $this->hasMany(Mood::class);
 }
+
+public function activityLogs()
+{
+    return $this->hasMany(ActivityLog::class);
+}
 }

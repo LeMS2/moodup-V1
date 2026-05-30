@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\DB;
 
 // 🔥 OTP
 use App\Models\PasswordOtp;
@@ -39,6 +40,17 @@ class AuthController extends Controller
                 'password' => Hash::make($data['password']),
                 'accepted_terms_at' => now(),
             ]);
+
+            // TIRA SE DER ERRADO
+
+            DB::table('activity_logs')->insert([
+    'user_id' => $user->id,
+    'action' => 'register',
+    'description' => 'Novo usuário cadastrado',
+    'ip_address' => $request->ip(),
+    'created_at' => now(),
+    'updated_at' => now(),
+]);
 
             // 🔥 CRIA O TOKEN (igual ao login)
             $token = $user->createToken('mobile')->plainTextToken;
@@ -82,6 +94,17 @@ $user->tokens()->delete();
 
 $token = $user->createToken('mobile')->plainTextToken;
 
+// TIRA SE NÃO DER CERTO:
+
+    DB::table('activity_logs')->insert([
+    'user_id' => $user->id,
+    'action' => 'login',
+    'description' => 'Usuário realizou login',
+    'ip_address' => $request->ip(),
+    'created_at' => now(),
+    'updated_at' => now(),
+]);
+
         return response()->json([
             'user' => $user,
             'token' => $token,
@@ -95,6 +118,16 @@ $token = $user->createToken('mobile')->plainTextToken;
 
         $user->accepted_terms_at = now();
         $user->save();
+        
+// TIRA SE NÃO DER CERTO
+        DB::table('activity_logs')->insert([
+    'user_id' => $user->id,
+    'action' => 'accept_terms',
+    'description' => 'Usuário aceitou os termos de uso',
+    'ip_address' => $request->ip(),
+    'created_at' => now(),
+    'updated_at' => now(),
+]);
 
         return response()->json([
             'message' => 'Termos aceitos com sucesso.',
@@ -110,14 +143,27 @@ $token = $user->createToken('mobile')->plainTextToken;
         ]);
     }
 
-    public function logout(Request $request)
-    {
-        $request->user()->currentAccessToken()->delete();
+    // VOLTA CÓDIGO ANTERIOR SE NÃO DER CERTO
 
-        return response()->json([
-            'message' => 'Logout realizado com sucesso.',
-        ]);
-    }
+    public function logout(Request $request)
+{
+    DB::table('activity_logs')->insert([
+        'user_id' => $request->user()->id,
+        'action' => 'logout',
+        'description' => 'Usuário realizou logout',
+        'ip_address' => $request->ip(),
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    $request->user()->currentAccessToken()->delete();
+
+    return response()->json([
+        'message' => 'Logout realizado com sucesso.',
+    ]);
+}
+
+
     public function deactivateAccount(Request $request)
 {
     $user = $request->user();
@@ -164,6 +210,16 @@ $token = $user->createToken('mobile')->plainTextToken;
             'otp' => Hash::make($otp),
             'expires_at' => Carbon::now()->addMinutes(10),
         ]);
+
+        // tira se não der certo 
+        DB::table('activity_logs')->insert([
+    'user_id' => $user->id,
+    'action' => 'forgot_password',
+    'description' => 'Solicitou recuperação de senha',
+    'ip_address' => $request->ip(),
+    'created_at' => now(),
+    'updated_at' => now(),
+]);
 
         // 📧 email bonito
         $html = "
@@ -267,6 +323,16 @@ if ($user->desativado_em) {
 }
 
 $user->save();
+
+// TIRA SE NAO DER CERTO
+        DB::table('activity_logs')->insert([
+    'user_id' => $user->id,
+    'action' => 'reset_password',
+    'description' => 'Senha redefinida com sucesso',
+    'ip_address' => $request->ip(),
+    'created_at' => now(),
+    'updated_at' => now(),
+]);
 
         // 🔒 Segurança extra: Invalidar todos os tokens do usuário
         // Isso força o usuário a fazer login novamente em todos os dispositivos

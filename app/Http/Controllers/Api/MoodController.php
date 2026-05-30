@@ -9,6 +9,7 @@ use App\Models\Mood;
 use Illuminate\Http\Request;
 use App\Http\Resources\MoodResource;
 use Illuminate\Support\Facades\Log;
+use App\Models\ActivityLog;
 
 class MoodController extends Controller
 {
@@ -71,6 +72,15 @@ class MoodController extends Controller
         Log::info('💾 DADOS PARA CREATE:', $data);
 
         $mood = Mood::create($data);
+
+        // TIRA SE DER ERRADO
+
+        ActivityLog::create([
+    'user_id' => $user->id,
+    'action' => 'CREATE_MOOD',
+    'description' => 'Criou um registro de humor: ' . $mood->title,
+    'ip_address' => $request->ip(),
+]);
         
         Log::info('🎉 MOOD CRIADO:', $mood->toArray());
 
@@ -154,6 +164,15 @@ class MoodController extends Controller
         unset($data['user_id']); // Impede mudança de usuário
 
         $mood->update($data);
+
+        // TIRA SE DER ERRADO
+
+        ActivityLog::create([
+    'user_id' => $request->user()->id,
+    'action' => 'UPDATE_MOOD',
+    'description' => 'Editou o humor ID ' . $mood->id,
+    'ip_address' => $request->ip(),
+]);
         
         Log::info('💾 MOOD ATUALIZADO:', $mood->fresh()->toArray());
 
@@ -214,8 +233,15 @@ class MoodController extends Controller
         $mood->triggers()->sync([]);
         
         $mood->delete();
+
+        // TIRA SE DER ERRADO
         
-        Log::info('✅ MOOD DELETADO COM SUCESSO:', ['id' => $mood->id]);
+        ActivityLog::create([
+    'user_id' => $request->user()->id,
+    'action' => 'DELETE_MOOD',
+    'description' => 'Removeu o humor ID ' . $mood->id,
+    'ip_address' => $request->ip(),
+]);
 
         return response()->json([
             'message' => 'Registro removido com sucesso.',

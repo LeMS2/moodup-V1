@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\ResourceController;
 use App\Http\Controllers\Api\FeedbackController;
 use App\Http\Controllers\Api\TriggerController;
 use App\Http\Controllers\Api\SubTriggerController;
+use App\Http\Controllers\Api\LogController; // ✅ NOVO IMPORT
 
 Route::get('/health', fn () => response()->json([
     'status' => 'ok',
@@ -24,32 +25,33 @@ Route::prefix('auth')->group(function () {
 });
 
 Route::middleware('auth:sanctum')->group(function () {
+
     Route::get('/me', [AuthController::class, 'me']);
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::post('/auth/accept-terms', [AuthController::class, 'acceptTerms']);
     Route::post('/account/deactivate', [AuthController::class, 'deactivateAccount']);
 
     // =========================
-    // 📌 ROTAS DE MOODS (API Resource)
+    // 📌 ROTAS DE MOODS
     // =========================
     Route::apiResource('moods', MoodController::class);
-    
+
     // =========================
-    // 📌 ROTAS ADICIONAIS DE SUMMARY E INSIGHTS
+    // 📌 SUMMARY E INSIGHTS
     // =========================
     Route::get('/moods/summary', [MoodController::class, 'summary']);
     Route::get('/moods/summary/weekly', [MoodSummaryController::class, 'weekly']);
     Route::get('/moods/summary/monthly', [MoodSummaryController::class, 'monthly']);
     Route::get('/moods/insights/weekly', [MoodSummaryController::class, 'weeklyInsights']);
-    
+
     // =========================
-    // 📌 ROTAS PARA ESTATÍSTICAS AVANÇADAS
+    // 📌 ESTATÍSTICAS
     // =========================
     Route::get('/moods/stats/daily', [MoodController::class, 'dailyStats']);
     Route::get('/moods/stats/monthly', [MoodController::class, 'monthlyStats']);
 
     // =========================
-    // 📊 ROTAS DE ESTATÍSTICAS E RELATÓRIOS (NOVAS)
+    // 📊 RELATÓRIOS
     // =========================
     Route::get('/stats/top-triggers', [MoodSummaryController::class, 'topTriggers']);
     Route::get('/stats/top-resources', [MoodSummaryController::class, 'topResources']);
@@ -75,17 +77,30 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/feedback', [FeedbackController::class, 'store']);
 
     // =========================
-    // 🔥 TRIGGERS E SUB-TRIGGERS
+    // 🔥 TRIGGERS
     // =========================
     Route::get('/triggers', [TriggerController::class, 'index']);
     Route::get('/triggers/{id}', [TriggerController::class, 'show']);
     Route::post('/triggers', [TriggerController::class, 'store']);
     Route::put('/triggers/{id}', [TriggerController::class, 'update']);
     Route::delete('/triggers/{id}', [TriggerController::class, 'destroy']);
-    
+
+    // =========================
+    // 🔥 SUB-TRIGGERS
+    // =========================
     Route::get('/sub-triggers', [SubTriggerController::class, 'index']);
     Route::get('/sub-triggers/{id}', [SubTriggerController::class, 'show']);
     Route::post('/sub-triggers', [SubTriggerController::class, 'store']);
     Route::put('/sub-triggers/{id}', [SubTriggerController::class, 'update']);
     Route::delete('/sub-triggers/{id}', [SubTriggerController::class, 'destroy']);
+
+    // =========================
+    // 🔐 LOGS ADMIN
+    // =========================
+    Route::middleware('admin')->group(function () {
+
+        Route::get('/logs', [LogController::class, 'index']);
+
+    });
+
 });

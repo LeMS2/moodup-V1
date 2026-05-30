@@ -95,12 +95,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/sub-triggers/{id}', [SubTriggerController::class, 'destroy']);
 
     // =========================
-    // 🔐 LOGS ADMIN
+    // 🔐 ROTAS ADMIN (protegidas)
     // =========================
-    Route::middleware('admin')->group(function () {
-
-        Route::get('/logs', [LogController::class, 'index']);
-
+    Route::middleware(['admin'])->group(function () {
+        Route::get('/admin/activity-logs', [AdminController::class, 'getActivityLogs']);
+        Route::get('/admin/users', [AdminController::class, 'getUsers']);
+        Route::put('/admin/users/{id}/role', [AdminController::class, 'updateUserRole']);
     });
-
 });

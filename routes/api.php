@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\FeedbackController;
 use App\Http\Controllers\Api\TriggerController;
 use App\Http\Controllers\Api\SubTriggerController;
 use App\Http\Controllers\Api\LogController; // ✅ NOVO IMPORT
+use App\Http\Controllers\Api\AdminController; // 🔥 ADICIONE ESTA LINHA
 
 Route::get('/health', fn () => response()->json([
     'status' => 'ok',

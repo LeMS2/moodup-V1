@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\DB;
+use App\Models\AccountStatusLog;
 
 // 🔥 OTP
 use App\Models\PasswordOtp;
@@ -170,6 +171,10 @@ $token = $user->createToken('mobile')->plainTextToken;
 
     $user->desativado_em = now();
     $user->save();
+    AccountStatusLog::create([
+    'user_id' => $user->id,
+    'acao' => 'desativado',
+]);
 
     // segurança: derruba todas as sessões/tokens
     $user->tokens()->delete();
@@ -319,7 +324,13 @@ $user->password = Hash::make($request->password);
 
 // Se a conta estava desativada, reativa automaticamente
 if ($user->desativado_em) {
+
     $user->desativado_em = null;
+
+    AccountStatusLog::create([
+        'user_id' => $user->id,
+        'acao' => 'reativado',
+    ]);
 }
 
 $user->save();

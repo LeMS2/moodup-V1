@@ -46,7 +46,7 @@ class MoodController extends Controller
         }
 
         return MoodResource::collection(
-            $query->orderByDesc('date')->paginate(10)
+            $query->orderByDesc('date')->get()
         );
     }
 
